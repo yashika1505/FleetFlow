@@ -14,9 +14,8 @@ export default function ExpenseFuel() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [formData, setFormData] = useState<ExpenseCreate>({
     trip_id: 0,
-    amount: 0,
-    category: "",
-    description: "",
+    fuel_cost: 0,
+    misc_cost: 0,
   });
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -24,8 +23,8 @@ export default function ExpenseFuel() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (formData.trip_id === 0 || !formData.category) {
-      setSubmitError("Please fill in all required fields");
+    if (formData.trip_id === 0) {
+      setSubmitError("Please select a trip");
       return;
     }
 
@@ -35,9 +34,8 @@ export default function ExpenseFuel() {
       await expenseService.addExpense(formData);
       setFormData({
         trip_id: 0,
-        amount: 0,
-        category: "",
-        description: "",
+        fuel_cost: 0,
+        misc_cost: 0,
       });
       setShowForm(false);
       await refetch();
@@ -106,7 +104,7 @@ export default function ExpenseFuel() {
               </div>
             )}
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium text-foreground">Trip ID *</label>
                   <input
@@ -119,39 +117,24 @@ export default function ExpenseFuel() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-foreground">Amount ($) *</label>
+                  <label className="text-sm font-medium text-foreground">Fuel Cost ($)</label>
                   <input
                     type="number"
                     step="0.01"
-                    required
                     placeholder="0.00"
-                    value={formData.amount}
-                    onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) })}
+                    value={formData.fuel_cost}
+                    onChange={(e) => setFormData({ ...formData, fuel_cost: parseFloat(e.target.value) })}
                     className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring/30"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-foreground">Category *</label>
-                  <select
-                    required
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring/30"
-                  >
-                    <option value="">Select category</option>
-                    <option>Fuel</option>
-                    <option>Maintenance</option>
-                    <option>Toll</option>
-                    <option>Other</option>
-                  </select>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-foreground">Description</label>
+                  <label className="text-sm font-medium text-foreground">Misc Cost ($)</label>
                   <input
-                    type="text"
-                    placeholder="Optional notes"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={formData.misc_cost}
+                    onChange={(e) => setFormData({ ...formData, misc_cost: parseFloat(e.target.value) })}
                     className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring/30"
                   />
                 </div>
@@ -169,19 +152,19 @@ export default function ExpenseFuel() {
 
         <SearchFilterBar
           searchPlaceholder="Search expenses..."
-          groupByOptions={["Category", "Trip"]}
-          filterOptions={["All", "Fuel", "Maintenance", "Toll", "Other"]}
-          sortOptions={["Latest", "Highest Cost", "Lowest Cost"]}
+          groupByOptions={["Trip"]}
+          filterOptions={["All"]}
+          sortOptions={["Trip ID", "Total Cost"]}
         />
 
-        <DataTable columns={["Expense ID", "Trip ID", "Category", "Amount", "Description", "Actions"]}>
+        <DataTable columns={["Expense ID", "Trip ID", "Fuel Cost", "Misc Cost", "Total", "Actions"]}>
           {expenses.map((e) => (
             <TableRow key={e.id}>
               <TableCell className="font-medium">{e.id}</TableCell>
               <TableCell>{e.trip_id}</TableCell>
-              <TableCell>{e.category}</TableCell>
-              <TableCell className="text-green-600">${e.amount?.toFixed(2)}</TableCell>
-              <TableCell className="text-sm text-muted-foreground">{e.description}</TableCell>
+              <TableCell className="text-green-600">${e.fuel_cost?.toFixed(2)}</TableCell>
+              <TableCell className="text-green-600">${e.misc_cost?.toFixed(2)}</TableCell>
+              <TableCell className="font-semibold">${((e.fuel_cost || 0) + (e.misc_cost || 0)).toFixed(2)}</TableCell>
               <TableCell>
                 <button
                   onClick={() => handleDelete(e.id)}

@@ -15,10 +15,9 @@ export default function Maintenance() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [formData, setFormData] = useState<MaintenanceCreate>({
     vehicle_id: 0,
-    maintenance_type: "",
-    description: "",
+    issue: "",
+    date: new Date().toISOString().split("T")[0],
     cost: 0,
-    maintenance_date: new Date().toISOString().split("T")[0],
     status: "Pending",
   });
 
@@ -35,10 +34,9 @@ export default function Maintenance() {
       await maintenanceService.addMaintenance(formData);
       setFormData({
         vehicle_id: 0,
-        maintenance_type: "",
-        description: "",
+        issue: "",
+        date: new Date().toISOString().split("T")[0],
         cost: 0,
-        maintenance_date: new Date().toISOString().split("T")[0],
         status: "Pending",
       });
       setShowForm(false);
@@ -116,33 +114,23 @@ export default function Maintenance() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-foreground">Maintenance Type</label>
+                  <label className="text-sm font-medium text-foreground">Issue/Maintenance Type *</label>
                   <input
                     type="text"
                     required
-                    placeholder="Oil Change"
-                    value={formData.maintenance_type}
-                    onChange={(e) => setFormData({ ...formData, maintenance_type: e.target.value })}
+                    placeholder="e.g., Oil Change, Tire Replacement"
+                    value={formData.issue}
+                    onChange={(e) => setFormData({ ...formData, issue: e.target.value })}
                     className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring/30"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-foreground">Date</label>
+                  <label className="text-sm font-medium text-foreground">Date *</label>
                   <input
                     type="date"
                     required
-                    value={formData.maintenance_date}
-                    onChange={(e) => setFormData({ ...formData, maintenance_date: e.target.value })}
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring/30"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-foreground">Description</label>
-                  <input
-                    type="text"
-                    placeholder="Details..."
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    value={formData.date}
+                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                     className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring/30"
                   />
                 </div>

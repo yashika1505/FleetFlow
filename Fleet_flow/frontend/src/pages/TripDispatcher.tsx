@@ -15,11 +15,10 @@ export default function TripDispatcher() {
   const [formData, setFormData] = useState<TripCreate>({
     vehicle_id: 0,
     driver_id: 0,
-    source: "",
+    origin: "",
     destination: "",
-    distance: 0,
-    start_time: new Date().toISOString(),
-    end_time: new Date().toISOString(),
+    cargo_weight: 0,
+    fuel_estimate: 0,
     status: "Pending",
   });
 
@@ -38,11 +37,10 @@ export default function TripDispatcher() {
       setFormData({
         vehicle_id: 0,
         driver_id: 0,
-        source: "",
+        origin: "",
         destination: "",
-        distance: 0,
-        start_time: new Date().toISOString(),
-        end_time: new Date().toISOString(),
+        cargo_weight: 0,
+        fuel_estimate: 0,
         status: "Pending",
       });
       await refetch();
@@ -87,13 +85,14 @@ export default function TripDispatcher() {
           sortOptions={["Newest", "Origin", "Destination"]}
         />
 
-        <DataTable columns={["Trip ID", "Source", "Destination", "Distance", "Status"]}>
+        <DataTable columns={["Trip ID", "Origin", "Destination", "Vehicle", "Driver", "Status"]}>
           {trips.map((t) => (
             <TableRow key={t.id}>
               <TableCell className="font-medium">{t.id}</TableCell>
-              <TableCell>{t.source}</TableCell>
+              <TableCell>{t.origin}</TableCell>
               <TableCell>{t.destination}</TableCell>
-              <TableCell>{t.distance} km</TableCell>
+              <TableCell>{t.vehicle_id}</TableCell>
+              <TableCell>{t.driver_id}</TableCell>
               <TableCell><StatusBadge status={t.status} /></TableCell>
             </TableRow>
           ))}
@@ -131,12 +130,12 @@ export default function TripDispatcher() {
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-foreground">Distance (km)</label>
+                <label className="text-sm font-medium text-foreground">Cargo Weight (kg)</label>
                 <input
                   type="number"
                   step="0.1"
-                  value={formData.distance}
-                  onChange={(e) => setFormData({ ...formData, distance: parseFloat(e.target.value) })}
+                  value={formData.cargo_weight}
+                  onChange={(e) => setFormData({ ...formData, cargo_weight: parseFloat(e.target.value) })}
                   className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring/30"
                 />
               </div>
@@ -146,8 +145,8 @@ export default function TripDispatcher() {
                   type="text"
                   required
                   placeholder="Starting point"
-                  value={formData.source}
-                  onChange={(e) => setFormData({ ...formData, source: e.target.value })}
+                  value={formData.origin}
+                  onChange={(e) => setFormData({ ...formData, origin: e.target.value })}
                   className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring/30"
                 />
               </div>
@@ -159,6 +158,16 @@ export default function TripDispatcher() {
                   placeholder="End point"
                   value={formData.destination}
                   onChange={(e) => setFormData({ ...formData, destination: e.target.value })}
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring/30"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-foreground">Fuel Estimate (Liters)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={formData.fuel_estimate}
+                  onChange={(e) => setFormData({ ...formData, fuel_estimate: parseFloat(e.target.value) })}
                   className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring/30"
                 />
               </div>

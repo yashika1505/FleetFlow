@@ -29,10 +29,9 @@ export default function DriverProfiles() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [formData, setFormData] = useState<DriverCreate>({
     name: "",
-    email: "",
-    phone: "",
     license_number: "",
-    license_expiry: new Date().toISOString().split("T")[0],
+    expiry_date: new Date().toISOString().split("T")[0],
+    status: "Active",
   });
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -40,7 +39,7 @@ export default function DriverProfiles() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.name || !formData.license_number) {
+    if (!formData.name || !formData.license_number || !formData.status) {
       setSubmitError("Please fill in all required fields");
       return;
     }
@@ -51,10 +50,9 @@ export default function DriverProfiles() {
       await driverService.addDriver(formData);
       setFormData({
         name: "",
-        email: "",
-        phone: "",
         license_number: "",
-        license_expiry: new Date().toISOString().split("T")[0],
+        expiry_date: new Date().toISOString().split("T")[0],
+        status: "Active",
       });
       setShowForm(false);
       await refetch();
@@ -136,26 +134,6 @@ export default function DriverProfiles() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-foreground">Email</label>
-                  <input
-                    type="email"
-                    placeholder="email@example.com"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring/30"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-foreground">Phone</label>
-                  <input
-                    type="tel"
-                    placeholder="+1234567890"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring/30"
-                  />
-                </div>
-                <div className="space-y-1.5">
                   <label className="text-sm font-medium text-foreground">License Number *</label>
                   <input
                     type="text"
@@ -167,13 +145,27 @@ export default function DriverProfiles() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-foreground">License Expiry</label>
+                  <label className="text-sm font-medium text-foreground">License Expiry *</label>
                   <input
                     type="date"
-                    value={formData.license_expiry}
-                    onChange={(e) => setFormData({ ...formData, license_expiry: e.target.value })}
+                    required
+                    value={formData.expiry_date}
+                    onChange={(e) => setFormData({ ...formData, expiry_date: e.target.value })}
                     className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring/30"
                   />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground">Status *</label>
+                  <select
+                    required
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring/30"
+                  >
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                    <option value="On Leave">On Leave</option>
+                  </select>
                 </div>
               </div>
               <button
@@ -194,15 +186,14 @@ export default function DriverProfiles() {
           sortOptions={["Name", "License Expiry"]}
         />
 
-        <DataTable columns={["Driver ID", "Name", "License", "Expiry", "Email", "Phone", "Actions"]}>
+        <DataTable columns={["Driver ID", "Name", "License", "Expiry", "Status", "Actions"]}>
           {drivers.map((d) => (
             <TableRow key={d.id}>
               <TableCell className="font-medium">{d.id}</TableCell>
               <TableCell>{d.name}</TableCell>
               <TableCell>{d.license_number}</TableCell>
-              <TableCell>{d.license_expiry}</TableCell>
-              <TableCell className="text-sm text-muted-foreground">{d.email}</TableCell>
-              <TableCell className="text-sm text-muted-foreground">{d.phone}</TableCell>
+              <TableCell>{d.expiry_date}</TableCell>
+              <TableCell>{d.status}</TableCell>
               <TableCell>
                 <button
                   onClick={() => handleDelete(d.id)}
