@@ -1,0 +1,93 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222 20% 14%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 20% 14%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 20% 14%;
+
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 20% 96%;
+    --secondary-foreground: 222 20% 14%;
+
+    --muted: 210 20% 97%;
+    --muted-foreground: 215 16% 47%;
+
+    --accent: 217 91% 96%;
+    --accent-foreground: 217 71% 45%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 20% 92%;
+    --input: 214 20% 92%;
+    --ring: 217 91% 60%;
+
+    --radius: 0.75rem;
+
+    /* KPI card accent colors */
+    --kpi-blue: 217 91% 95%;
+    --kpi-green: 142 70% 94%;
+    --kpi-amber: 30 95% 94%;
+    --kpi-red: 0 85% 95%;
+    --kpi-purple: 270 70% 95%;
+    --kpi-teal: 175 60% 93%;
+
+    --kpi-blue-icon: 217 91% 55%;
+    --kpi-green-icon: 142 70% 40%;
+    --kpi-amber-icon: 30 95% 48%;
+    --kpi-red-icon: 0 85% 50%;
+    --kpi-purple-icon: 270 70% 50%;
+    --kpi-teal-icon: 175 60% 38%;
+
+    /* Sidebar */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 215 16% 47%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 217 91% 96%;
+    --sidebar-accent-foreground: 217 71% 45%;
+    --sidebar-border: 214 20% 92%;
+    --sidebar-ring: 217 91% 60%;
+
+    /* Status colors */
+    --status-available: 142 70% 40%;
+    --status-available-bg: 142 70% 94%;
+    --status-on-trip: 217 91% 55%;
+    --status-on-trip-bg: 217 91% 95%;
+    --status-in-shop: 38 92% 50%;
+    --status-in-shop-bg: 38 92% 94%;
+    --status-pending: 270 70% 50%;
+    --status-pending-bg: 270 70% 95%;
+    --status-completed: 142 70% 40%;
+    --status-completed-bg: 142 70% 94%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer utilities {
+  .dashboard-card {
+    @apply bg-card rounded-xl border border-border shadow-sm p-5 transition-shadow duration-200 hover:shadow-md;
+  }
+  .page-container {
+    @apply p-6 space-y-6 max-w-[1400px] mx-auto;
+  }
+}
