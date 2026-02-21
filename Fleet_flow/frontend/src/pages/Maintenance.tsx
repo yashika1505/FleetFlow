@@ -3,17 +3,73 @@ import Layout from "@/components/Layout";
 import SearchFilterBar from "@/components/SearchFilterBar";
 import DataTable, { TableRow, TableCell } from "@/components/DataTable";
 import StatusBadge from "@/components/StatusBadge";
-import { Plus } from "lucide-react";
-
-const logs = [
-  { id: "MNT-001", vehicle: "TRK-A12", issue: "Oil Change", date: "2025-02-10", status: "Completed", cost: "$120" },
-  { id: "MNT-002", vehicle: "VAN-B03", issue: "Brake Pads", date: "2025-02-12", status: "In Shop", cost: "$350" },
-  { id: "MNT-003", vehicle: "TRK-C07", issue: "Tire Rotation", date: "2025-02-14", status: "Scheduled", cost: "$80" },
-  { id: "MNT-004", vehicle: "TRK-D15", issue: "Engine Check", date: "2025-02-15", status: "Pending", cost: "$500" },
-];
+import { Plus, Trash2, AlertCircle, Loader } from "lucide-react";
+import { useFetchMaintenance } from "@/hooks/useFetchMaintenance";
+import { maintenanceService, MaintenanceCreate } from "@/api/services";
+import { getErrorMessage } from "@/api/utils";
 
 export default function Maintenance() {
+  const { maintenance, loading, error, refetch } = useFetchMaintenance();
   const [showForm, setShowForm] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [formData, setFormData] = useState<MaintenanceCreate>({
+    vehicle_id: 0,
+    maintenance_type: "",
+    description: "",
+    cost: 0,
+    maintenance_date: new Date().toISOString().split("T")[0],
+    status: "Pending",
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (formData.vehicle_id === 0) {
+      setSubmitError("Please select a vehicle");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      setSubmitError(null);
+      await maintenanceService.addMaintenance(formData);
+      setFormData({
+        vehicle_id: 0,
+        maintenance_type: "",
+        description: "",
+        cost: 0,
+        maintenance_date: new Date().toISOString().split("T")[0],
+        status: "Pending",
+      });
+      setShowForm(false);
+      await refetch();
+    } catch (err) {
+      setSubmitError(getErrorMessage(err));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (confirm("Are you sure you want to delete this maintenance record?")) {
+      try {
+        await maintenanceService.deleteMaintenance(id);
+        await refetch();
+      } catch (err) {
+        alert("Failed to delete maintenance record: " + getErrorMessage(err));
+      }
+    }
+  };
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="page-container flex items-center justify-center min-h-screen">
+          <Loader className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -28,23 +84,108 @@ export default function Maintenance() {
           </button>
         </div>
 
+        {error && (
+          <div className="dashboard-card border-l-4 border-destructive bg-destructive/10 p-4 rounded-lg flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-destructive">{error}</p>
+              <button onClick={refetch} className="text-xs text-destructive underline hover:no-underline mt-1">
+                Retry
+              </button>
+            </div>
+          </div>
+        )}
+
         {showForm && (
           <div className="dashboard-card space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {["Vehicle Name", "Issue / Service", "Date"].map((label) => (
-                <div key={label} className="space-y-1.5">
-                  <label className="text-sm font-medium text-foreground">{label}</label>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {submitError && (
+                <div className="p-3 bg-destructive/10 border border-destructive/20 rounded text-sm text-destructive">
+                  {submitError}
+                </div>
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground">Vehicle ID</label>
                   <input
-                    type={label === "Date" ? "date" : "text"}
+                    type="number"
+                    required
+                    value={formData.vehicle_id}
+                    onChange={(e) => setFormData({ ...formData, vehicle_id: parseInt(e.target.value) })}
                     className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring/30"
                   />
                 </div>
-              ))}
-            </div>
-            <div className="flex gap-3">
-              <button className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity">Create</button>
-              <button onClick={() => setShowForm(false)} className="px-4 py-2 rounded-lg border border-border text-foreground text-sm font-medium hover:bg-muted transition-colors">Cancel</button>
-            </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground">Maintenance Type</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Oil Change"
+                    value={formData.maintenance_type}
+                    onChange={(e) => setFormData({ ...formData, maintenance_type: e.target.value })}
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring/30"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground">Date</label>
+                  <input
+                    type="date"
+                    required
+                    value={formData.maintenance_date}
+                    onChange={(e) => setFormData({ ...formData, maintenance_date: e.target.value })}
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring/30"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground">Description</label>
+                  <input
+                    type="text"
+                    placeholder="Details..."
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring/30"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground">Cost</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={formData.cost}
+                    onChange={(e) => setFormData({ ...formData, cost: parseFloat(e.target.value) })}
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring/30"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground">Status</label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring/30"
+                  >
+                    <option>Pending</option>
+                    <option>Completed</option>
+                    <option>Cancelled</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+                >
+                  {isSubmitting ? "Creating..." : "Create"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowForm(false)}
+                  className="px-4 py-2 rounded-lg border border-border text-foreground text-sm font-medium hover:bg-muted transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
           </div>
         )}
 
@@ -55,15 +196,23 @@ export default function Maintenance() {
           sortOptions={["Date", "Cost", "Vehicle"]}
         />
 
-        <DataTable columns={["Log ID", "Vehicle", "Issue/Service", "Date", "Status", "Cost"]}>
-          {logs.map((l) => (
-            <TableRow key={l.id}>
-              <TableCell className="font-medium">{l.id}</TableCell>
-              <TableCell>{l.vehicle}</TableCell>
-              <TableCell>{l.issue}</TableCell>
-              <TableCell>{l.date}</TableCell>
-              <TableCell><StatusBadge status={l.status} /></TableCell>
-              <TableCell>{l.cost}</TableCell>
+        <DataTable columns={["ID", "Vehicle ID", "Type", "Date", "Cost", "Status", "Actions"]}>
+          {maintenance.map((m) => (
+            <TableRow key={m.id}>
+              <TableCell className="font-medium">{m.id}</TableCell>
+              <TableCell>{m.vehicle_id}</TableCell>
+              <TableCell>{m.maintenance_type}</TableCell>
+              <TableCell>{m.maintenance_date}</TableCell>
+              <TableCell>${m.cost}</TableCell>
+              <TableCell><StatusBadge status={m.status} /></TableCell>
+              <TableCell>
+                <button
+                  onClick={() => handleDelete(m.id)}
+                  className="text-sm text-destructive hover:underline"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </TableCell>
             </TableRow>
           ))}
         </DataTable>

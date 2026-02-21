@@ -1,30 +1,75 @@
+import { useState } from "react";
 import Layout from "@/components/Layout";
 import KPICard from "@/components/KPICard";
 import SearchFilterBar from "@/components/SearchFilterBar";
 import DataTable, { TableRow, TableCell } from "@/components/DataTable";
 import StatusBadge from "@/components/StatusBadge";
-import { Truck, AlertTriangle, Activity, Package } from "lucide-react";
-
-const trips = [
-  { trip: "TR-1001", vehicle: "TRK-A12", driver: "John Smith", status: "In Transit" },
-  { trip: "TR-1002", vehicle: "VAN-B03", driver: "Sarah Lee", status: "Delivered" },
-  { trip: "TR-1003", vehicle: "TRK-C07", driver: "Mike Brown", status: "Pending" },
-  { trip: "TR-1004", vehicle: "TRK-D15", driver: "Lisa Chen", status: "In Transit" },
-  { trip: "TR-1005", vehicle: "VAN-E09", driver: "Alex Kim", status: "Completed" },
-];
+import { Truck, AlertTriangle, Activity, Package, Loader, AlertCircle } from "lucide-react";
+import { useFetchTrips } from "@/hooks/useFetchTrips";
+import { tripService } from "@/api/services";
 
 export default function Dashboard() {
+  const { trips, loading, error, refetch } = useFetchTrips();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState("All");
+
+  const filteredTrips = trips.filter((trip) => {
+    const matchesSearch = 
+      trip.id.toString().includes(searchTerm.toLowerCase()) ||
+      trip.source?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      trip.destination?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesFilter =
+      filterStatus === "All" || trip.status?.toLowerCase() === filterStatus.toLowerCase();
+    
+    return matchesSearch && matchesFilter;
+  });
+
+  const handleDeleteTrip = async (id: number) => {
+    if (confirm("Are you sure you want to delete this trip?")) {
+      try {
+        await tripService.deleteTrip(id);
+        await refetch();
+      } catch (err) {
+        console.error("Error deleting trip:", err);
+        alert("Failed to delete trip");
+      }
+    }
+  };
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="page-container flex items-center justify-center min-h-screen">
+          <Loader className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <div className="page-container">
         <h1 className="text-xl font-bold text-foreground">Command Center</h1>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <KPICard title="Active Fleet" value={42} icon={Truck} color="blue" />
-          <KPICard title="Maintenance Alert" value={7} icon={AlertTriangle} color="red" />
-          <KPICard title="Utilization Rate" value="87%" icon={Activity} color="green" />
-          <KPICard title="Pending Cargo" value={15} icon={Package} color="amber" />
+          <KPICard title="Active Fleet" value={trips.length} icon={Truck} color="blue" />
+          <KPICard title="Pending Trips" value={trips.filter(t => t.status === "Pending").length} icon={AlertTriangle} color="red" />
+          <KPICard title="In Transit" value={trips.filter(t => t.status === "In Transit").length} icon={Activity} color="green" />
+          <KPICard title="Completed" value={trips.filter(t => t.status === "Completed").length} icon={Package} color="amber" />
         </div>
+
+        {error && (
+          <div className="dashboard-card border-l-4 border-destructive bg-destructive/10 p-4 rounded-lg flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-destructive">{error}</p>
+              <button onClick={refetch} className="text-xs text-destructive underline hover:no-underline mt-1">
+                Retry
+              </button>
+            </div>
+          </div>
+        )}
 
         <SearchFilterBar
           searchPlaceholder="Search trips..."
@@ -33,13 +78,21 @@ export default function Dashboard() {
           sortOptions={["Newest", "Oldest", "Vehicle"]}
         />
 
-        <DataTable columns={["Trip", "Vehicle", "Driver", "Status"]}>
-          {trips.map((t) => (
-            <TableRow key={t.trip}>
-              <TableCell className="font-medium">{t.trip}</TableCell>
-              <TableCell>{t.vehicle}</TableCell>
-              <TableCell>{t.driver}</TableCell>
+        <DataTable columns={["Trip ID", "Source", "Destination", "Status", "Actions"]}>
+          {filteredTrips.map((t) => (
+            <TableRow key={t.id}>
+              <TableCell className="font-medium">{t.id}</TableCell>
+              <TableCell>{t.source}</TableCell>
+              <TableCell>{t.destination}</TableCell>
               <TableCell><StatusBadge status={t.status} /></TableCell>
+              <TableCell>
+                <button 
+                  onClick={() => handleDeleteTrip(t.id)}
+                  className="text-sm text-destructive hover:underline"
+                >
+                  Delete
+                </button>
+              </TableCell>
             </TableRow>
           ))}
         </DataTable>
